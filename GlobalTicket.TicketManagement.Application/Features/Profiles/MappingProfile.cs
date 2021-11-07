@@ -1,10 +1,6 @@
 ﻿using AutoMapper;
 using GlobalTicket.TicketManagement.Application.Features.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using GlobalTicket.TicketManagement.Domain.Entities;
 
 namespace GlobalTicket.TicketManagement.Application.Features.Profiles
 {
@@ -12,7 +8,9 @@ namespace GlobalTicket.TicketManagement.Application.Features.Profiles
     {
         public MappingProfile()
         {
-            CreateMap<EventArgs, EventListVm>().ReverseMap();
+            CreateMap<Event, EventListVm>().ReverseMap();
+            CreateMap<Event, EventDetailVm>().ReverseMap();
+            CreateMap<Category, CategoryDto>();
         }
     }
 }
