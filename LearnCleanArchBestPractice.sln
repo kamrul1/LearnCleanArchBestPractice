@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31702.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A2204425-4A13-46DA-95C6-EE30E483E2A2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{FDDB8451-446B-4381-92CD-AF72EE4E5E7C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{53A0D001-80CD-47DC-B35F-A5C821F8D2E8}"
+	ProjectSection(SolutionItems) = preProject
+		build\README.md = build\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "API", "API", "{03C8125E-2381-4344-9C72-BF7336618DF9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{A01312C7-9126-4D40-A88A-B356F49AFBF4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{A35CCA83-2800-4E5B-9A10-BEBB936840F8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UI", "UI", "{AC6D9850-A21C-4CD7-B25D-8808A7C041BF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlobalTicket.TicketManagement.Domain", "GlobalTicket.TicketManagement.Domain\GlobalTicket.TicketManagement.Domain.csproj", "{7ED76505-62D6-46FF-9855-F0D7AF47DC79}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7ED76505-62D6-46FF-9855-F0D7AF47DC79}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7ED76505-62D6-46FF-9855-F0D7AF47DC79}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7ED76505-62D6-46FF-9855-F0D7AF47DC79}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7ED76505-62D6-46FF-9855-F0D7AF47DC79}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{03C8125E-2381-4344-9C72-BF7336618DF9} = {A2204425-4A13-46DA-95C6-EE30E483E2A2}
+		{A01312C7-9126-4D40-A88A-B356F49AFBF4} = {A2204425-4A13-46DA-95C6-EE30E483E2A2}
+		{A35CCA83-2800-4E5B-9A10-BEBB936840F8} = {A2204425-4A13-46DA-95C6-EE30E483E2A2}
+		{AC6D9850-A21C-4CD7-B25D-8808A7C041BF} = {A2204425-4A13-46DA-95C6-EE30E483E2A2}
+		{7ED76505-62D6-46FF-9855-F0D7AF47DC79} = {A01312C7-9126-4D40-A88A-B356F49AFBF4}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B9605E0B-088C-4729-B979-87387E7A377B}
+	EndGlobalSection
+EndGlobal
