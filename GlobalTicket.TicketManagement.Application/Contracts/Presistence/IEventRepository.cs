@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace GlobalTicket.TicketManagement.Application.Contracts.Presistence
 {
-    public interface IEventRepository: IAsyncRepository<Event>
+    public interface IEventRepository : IAsyncRepository<Event>
     {
-        
+        Task<bool> IsEventNameAndDateUnique(string name, DateTime eventDate);
     }
 }

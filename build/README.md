@@ -122,6 +122,198 @@ Features
       
 ```
 
+IRequests such as ```UpdateEventCommand.cs``` that don't return anything use ```Task<Unit>``` in the handler return type:
+```csharp
+public class UpdateEventCommandHandler : IRequestHandler<UpdateEventCommand>
+{
+    private readonly IMapper mapper;
+    private readonly IEventRepository eventRepository;
+
+    public UpdateEventCommandHandler(IMapper mapper, IEventRepository eventRepository)
+    {
+        this.mapper = mapper;
+        this.eventRepository = eventRepository;
+    }
+    public async Task<Unit> Handle(UpdateEventCommand request, CancellationToken cancellationToken)
+    {
+        var eventToUpdate = await eventRepository.GetByIdAsync(request.EventId);
+        mapper.Map(request, eventToUpdate, typeof(UpdateEventCommand), typeof(Event));
+
+        await eventRepository.UpdateAsync(eventToUpdate);
+
+        return Unit.Value;
+    }
+}
+```
+
+## Validation Rules on Event
+
+While it is possible to annote the rules into the Enity class, this is ***not recommended***.  This is because they
+are domain entities and validation should not be done by domain entities as here:
+
+
+```csharp
+public class Event: AuditableEntity
+{
+    public Guid EventId {get; set;}
+
+    [Required]
+    [StringLength(50)]
+    public string Name {get; set;}
+    public int Price {get; set;}
+
+    [Required]
+    [StringLength(50)]
+    public string Artist {get; set;} 
+}
+```
+
+Further not all business rule can be sorted by data annaotations.
+
+#### Adding Fluent Validation 
+Nuget ```FluentValidation.DependencyInjectionExtensions``` Package to the Application Package
+
+Can be used in Core project
+- RequestHandler
+- Part of the feature folder
+
+You create a custom validator inhereting from abstract class ```AbstractValidator```.  Here is an example for the
+```CreateEventCommandValidator.cs```
+```csharp
+    public class CreateEventCommandValidator: AbstractValidator<CreateEventCommand>
+    {
+        private readonly IEventRepository eventRepository;
+
+        public CreateEventCommandValidator(IEventRepository eventRepository)
+        {
+            RuleFor(p => p.Name)
+                .NotEmpty().WithMessage("{PropertyName} is required.")
+                .NotNull()
+                .MaximumLength(50).WithMessage("{PropertyName} must not exceed 50 characters.");
+
+            RuleFor(p => p.Date)
+                .NotEmpty().WithMessage("{PropertyName} is required.")
+                .NotNull()
+                .GreaterThan(DateTime.Now);
+
+            RuleFor(e => e)
+                .MustAsync(EventNameAndDateUnique)
+                .WithMessage("An event with the same name and date already exists");
+
+            RuleFor(p => p.Price)
+                .NotEmpty().WithMessage("{PropertyName} is required.")
+                .GreaterThan(0);
+            this.eventRepository = eventRepository;
+        }
+
+        private async Task<bool> EventNameAndDateUnique(CreateEventCommand e, CancellationToken token)
+        {
+            return !(await eventRepository.IsEventNameAndDateUnique(e.Name, e.Date));
+        }
+    }
+```
+You will notice, the ```EventNameAndDateUnique``` method, this something that data annotations can do in a nice to mantain way.
+
+
+
+Add the rule into the handler before mapping the object:
+
+```csharp
+public async Task<Guid> Handle(CreateEventCommand request, CancellationToken cancellationToken)
+{
+    var validator = new CreateEventCommandValidator();
+    var validationResult = await validator.ValidateAsync(request);
+
+    //todo: in next section check validationResult for exceptions (see returning exception below)
+
+    var @event = mapper.Map<Event>(request);
+    @event = await eventRepository.AddAsync(@event);
+
+    return @event.EventId;
+}
+```
+
+
+
+#### Returning Exceptions
+Core should return own set of exceptions
+- Can be handled or transformed by consumer
+
+Used Exceptions
+- NotFoundException
+- BadRequestException
+- ValidationException
+
+Create an Exceptions folder in the Application package and add custom exceptions
+```
+Exception <Folder>
+    BadRequestException.cs
+    NotFoundException.cs
+    ValidationException.cs
+```
+
+BadRequestException example, Note ApplicationException is a built in exceptions class.  This would be used for null exception
+```csharp
+public class BadRequestException: ApplicationException
+{
+    public BadRequestException(string message): base(message)
+    {
+
+    }
+        
+}
+```
+NotFoundException example, 
+```csharp
+public class NotFoundException:ApplicationException
+{
+    public NotFoundException(string name, object key):base($"{name} ({key} is not found)")
+    {
+    }
+}
+````
+
+IRequestHandler used exception ```ValidationException.cs``` class:
+```csharp
+public class ValidationException: ApplicationException
+{
+    public List<string> ValidationErrors { get; set; }
+
+    public ValidationException(ValidationResult validationResult)
+    {
+        ValidationErrors = new List<string>();
+
+        foreach(var valiationError in validationResult.Errors)
+        {
+            ValidationErrors.Add(valiationError.ErrorMessage);
+        }
+
+    }
+}
+```
+
+Add this exception handing to our IRequest Handler example:
+
+```csharp
+public async Task<Guid> Handle(CreateEventCommand request, CancellationToken cancellationToken)
+{
+    var validator = new CreateEventCommandValidator();
+    var validationResult = await validator.ValidateAsync(request);
+
+    if (validationResult.Errors.Count > 0)
+    {
+        throw new ValidationException(validationResult);
+    }
+
+    var @event = mapper.Map<Event>(request);
+    @event = await eventRepository.AddAsync(@event);
+
+    return @event.EventId;
+}
+```
+
+
+
 ## Infrastructure
 - Specific repository implementation 
 
