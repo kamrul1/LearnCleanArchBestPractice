@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GlobalTicket.TicketManagement.Application.Features.Events
+namespace GlobalTicket.TicketManagement.Application.Features.Categories.Queries.GetCategoriesList
 {
-    public class CategoryDto
+    public class CategoryListVm
     {
-        public Guid Id { get; set; }
+        public Guid CategoryId { get; set; }
         public string Name { get; set; }
     }
 }

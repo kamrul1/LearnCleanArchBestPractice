@@ -101,8 +101,26 @@ public static class ApplicationServiceRegistration
 }
 ```
 
+### Adding simple CQRS 
 
+Re-organise the Command Queries by Features e.g.
+> Feature is a verticle slice of the functionality
+> > Features folder and subfolders
+> > Own the view models they will use, not shared even if identical
 
+```
+Features
+    Categories
+        Commands
+        Queries
+    Events
+        Commands
+        Queries
+    Orders
+        Commands
+        Queries
+      
+```
 
 ## Infrastructure
 - Specific repository implementation 
