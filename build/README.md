@@ -312,6 +312,93 @@ public async Task<Guid> Handle(CreateEventCommand request, CancellationToken can
 }
 ```
 
+#### CommandResponse Class
+Create a ```BaseResponse.cs``` for common responses in Responses folder at parent folder level of Application package.:
+```csharp
+public class BaseResponse
+{
+    public BaseResponse()
+    {
+        Success = true;
+    }
+    public BaseResponse(string message = null)
+    {
+        Success = true;
+        Message = message;
+    }
+
+    public BaseResponse(string message, bool success)
+    {
+        Success = success;
+        Message = message;
+    }
+
+    public bool Success { get; set; }
+    public string Message { get; set; }
+    public List<string> ValidationErrors { get; set; }
+
+}
+```
+Use the base response to create a category response:
+```csharp
+public class CreateCategoryCommandResponse: BaseResponse
+{
+    public CreateCategoryCommandResponse() : base()
+    {
+
+    }
+
+    public CreateCategoryDto Category { get; set; }
+}
+
+```
+You will note the Category is included in the above response class aswell as success/failure from the ```BaseResponse.cs```.
+
+
+Here is the completed ```CreateCategoryCommandHandler.cs```: 
+```csharp
+public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryCommand, CreateCategoryCommandResponse>
+{
+    private readonly IMapper mapper;
+    private readonly ICategoryRepository categoryRepository;
+
+    public CreateCategoryCommandHandler(IMapper mapper, ICategoryRepository categoryRepository)
+    {
+        this.mapper = mapper;
+        this.categoryRepository = categoryRepository;
+    }
+
+    public async Task<CreateCategoryCommandResponse> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
+    {
+        var createCategoryCommandResponse = new CreateCategoryCommandResponse();
+
+        var validator = new CreateCategoryCommandValidator();
+        var validationResult = await validator.ValidateAsync(request);
+
+        if (validationResult.Errors.Count > 0)
+        {
+            createCategoryCommandResponse.Success = false;
+            createCategoryCommandResponse.ValidationErrors = new List<string>();
+            foreach (var error in validationResult.Errors)
+            {
+                createCategoryCommandResponse.ValidationErrors.Add(error.ErrorMessage);
+            }
+
+        }
+
+        if (createCategoryCommandResponse.Success)
+        {
+            var category = new Category { Name = request.Name };
+            category = await categoryRepository.AddAsync(category);
+            createCategoryCommandResponse.Category = mapper.Map<CreateCategoryDto>(category);
+        }
+
+        return createCategoryCommandResponse;
+
+    }
+}
+```
+
 
 
 ## Infrastructure
