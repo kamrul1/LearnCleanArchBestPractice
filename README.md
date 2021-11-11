@@ -401,7 +401,160 @@ public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryComman
 
 
 
-## Infrastructure
-- Specific repository implementation 
+## Infrastructure Project
+This should contain the implementation of:
+
+All external or I/O components
+- Database
+  - EF Core
+  - DbContext
+- Files
+- Service Bus
+- Service Client
+- Logging
+
+
+
+Add the nuget packages for EFCore:
+- Microsoft.EntityFrameworkCore
+- Microsoft.EntityFrameworkCore.SqlServer
+- Microsoft.EntityFrameworkCore.Design
+
+
+Create ````GlobalTicketDbContext.cs```` class, with seed data.  Instead of using entity attribute to build database entity
+use a Configurations classes to do it.  In the ```OnModelCreating(ModelBuilder modelBuilder)``` method add following:
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.ApplyConfigurationsFromAssembly(typeof(GloboTicketDbContext).Assembly);
+```
+This will cause it to search teh assembly for EventConfiguration to include for entity types.  
+For example for ```Event.cs```
+
+```csharp
+public class EventConfiguration : IEntityTypeConfiguration<Event>
+{
+    public void Configure(EntityTypeBuilder<Event> builder)
+    {
+        builder.Property(e => e.Name)
+            .IsRequired()
+            .HasMaxLength(50);
+    }
+}
+```
+
+Also, note when saving, tracker information is added in the override method of ````GlobalTicketDbContext.cs````
+```csharp
+public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
+{
+    foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
+    {
+        switch (entry.State)
+        {
+            case EntityState.Added:
+                entry.Entity.CreatedDate = DateTime.Now;
+                break;
+            case EntityState.Modified:
+                entry.Entity.LastModifiedDate = DateTime.Now;
+                break;
+        }
+    }
+    return base.SaveChangesAsync(cancellationToken);
+}
+```
+ ###Repositories folder
+
+The implementation of IAsyncRepository\<T> is in the BaseRepository\<T>, The generic T allows for any 
+entity to be specified.
+
+It is important to make the context protected, as this class will be implemented by children classes:
+```csharp
+protected readonly GloboTicketDbContext dbContext;
+```
+
+### Adding Support for Email
+
+>New requirement to send an email on creating an event
+
+Create a contract for IEmailService in the Application package.  As it's not presistance, add it to Mail Folder.
+```csharp
+public interface IEmailService
+{
+    Task<bool> SendEmail(Email email);
+}
+```
+Create a Models folder in the parent Application package. Place Mail folder and ```Email.cs``` and ```EmailSetting.cs``` classes in it.
+
+In the ```CreateEventCommandHandler.cs```, inject the IEmailService in the contractor and in the handle method send the email. 
+
+```csharp
+var email = new Email
+{
+    To="gill@snowball.be", Body=$"A new event was created {request}", Subject="A new event was created"
+};
+
+try
+{
+    await emailService.SendEmail(email);
+}
+catch (Exception ex)
+{
+
+    //this shouldn't stop the API from doing anything else so that can be logged
+}
+```
+Note there is no implementation of the service here just us of the contract/interface.
+In this project were are using [SendGrid](https://app.sendgrid.com/) to send the email. So you'll need to register and get an API from the service.
+Here is the implementation of the service in the infrastructure project:
+```csharp
+public class EmailService : IEmailService
+{
+    public EmailSettings emailSettings { get; set; }
+    public EmailService(IOptions<EmailSettings> mailSettings)
+    {
+        this.emailSettings = mailSettings.Value;
+    }
+
+    public async Task<bool> SendEmail(Email email)
+    {
+        var client = new SendGridClient(emailSettings.APiKey);
+
+        var subject = email.Subject;
+        var to = new EmailAddress(email.To);
+        var emailBody = email.Body;
+
+        var from = new EmailAddress
+        {
+            Email = emailSettings.FromAddress,
+            Name = emailSettings.FromName
+        };
+
+        var sendGridMessage = MailHelper.CreateSingleEmail(from, to, subject, emailBody, emailBody);
+        var response = await client.SendEmailAsync(sendGridMessage);
+
+        if(response.StatusCode==System.Net.HttpStatusCode.Accepted 
+            || response.StatusCode == System.Net.HttpStatusCode.OK)
+        {
+            return true;
+        }
+
+        return false;
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
