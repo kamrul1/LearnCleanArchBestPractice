@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>97c89483-36d2-4435-9c32-560e3feb1a41</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="9.0.0" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.12">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GlobalTicket.TicketManagement.Application\GlobalTicket.TicketManagement.Application.csproj" />
+    <ProjectReference Include="..\GlobalTicket.TicketManagement.Infrastructure\GlobalTicket.TicketManagement.Infrastructure.csproj" />
+    <ProjectReference Include="..\GlobalTicket.TicketManagement.Persistence\GlobalTicket.TicketManagement.Persistence.csproj" />
+  </ItemGroup>
+
+</Project>

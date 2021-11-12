@@ -3,7 +3,6 @@
 These are my course notes following the [pluralsight course](https://app.pluralsight.com/library/courses/architecting-asp-dot-net-core-applications-best-practices/table-of-contents)
 
 
-
 ## Domain Project
  - Entities
  - Common
@@ -542,6 +541,141 @@ public class EmailService : IEmailService
     }
 }
 ```
+----
+
+## Adding the API
+
+Create a SendGrid Account
+
+Use [Secret Manager](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-6.0&tabs=windows) 
+to hid the ApiKey secret in the appsetting.json
+
+Navigate to the API project folder in terminal, the location of the appsettings.json and run:
+```cmd
+dotnet user-secrets init
+```
+Hide the appsettings element with:
+```cmd
+dotnet user-secrets set "EmailSettings:ApiKey" "YOUR_REAL_KEY_GOES_HERE"
+```
+In the appsetting, leave the key vaue empty:
+```json
+  "EmailSettings": {
+    "FromAddress": "gill@test.com",
+    "ApiKey": "",
+    "FromName": "Gill"
+  }
+```
+
+### Setup ```Startup.cs```
+
+Add the service entensions for dependency injections:
+```csharp
+services.AddApplicationServices();
+services.AddInfrastructureService(Configuration);
+services.AddPresistenceServices(Configuration);
+```
+
+Add cross origin support:
+```csharp
+services.AddCors(options =>
+{
+    options.AddPolicy(
+        "Open", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
+        ); 
+});
+```
+
+### Create migrations for DbContext
+
+Set the API project as the startup project, in Package Manager Console, 
+select the GlobalTicket.TicketManagement.Persistence package and run:
+```powershell
+PM> add-migration InitialMigration
+```
+This will now create a migrations folder in the GlobalTicket.TicketManagement.Persistence project
+Add the changes to the database connection string defined in the appsetting.json, by running:
+```powershell
+update-database
+```
+
+### Not using the simple but Heavy Controller
+
+Typically these things are carried out in a controller:
+- Validate incoming data using model binding
+- Execute logic
+- Create resposne type
+- Return status code with response
+
+A better approach is to make the contoller lighter using a view service:
+- Logic is moved to a separate class
+- Called from the contoller
+- Views service connects with business logic
+- Returns DTO
+- Returns a more lightweight controllers
+
+An even more better option is to use MediatR, as below:
+```csharp
+[Route("api/[controller]")]
+[ApiController]
+public class CategoryController : ControllerBase
+{
+    private readonly IMediator mediator;
+
+    public CategoryController(IMediator mediator)
+    {
+        this.mediator = mediator;
+    }
+
+    [HttpGet("all", Name ="GetAllCategories")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<CategoryListVm>>> GetAllCategories()
+    {
+        var dto = await mediator.Send(new GetCategoriesListQuery());
+        return Ok(dto); 
+    } 
+
+    [HttpGet("allwithevents", Name ="GetCategoriesWithEvents")]
+    [ProducesDefaultResponseType]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<CategoryEventListVm>>> GetCategoriesWithEvents(bool includeHistory)
+    {
+        var getCategoriesListWithEventsQuery = new GetCategoriesListWithEventsQuery() { IncludeHistory = includeHistory };
+        var dtos = await mediator.Send(getCategoriesListWithEventsQuery);
+
+        return Ok(dtos);
+    }
+
+
+    [HttpPost(Name ="AddCategory")]
+    public async Task<ActionResult<CreateCategoryCommandResponse>> Create([FromBody] CreateCategoryCommand createCategoryCommand)
+    {
+        var response = await mediator.Send(createCategoryCommand);
+        return Ok(response); 
+    }
+
+```
+
+### Deciding Objects to Return
+
+A lot of times to much data is being send back by way of properties.  It is better to use a 
+```BaseResponse.cs``` class.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
 
 
 
