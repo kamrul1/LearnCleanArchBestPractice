@@ -662,6 +662,90 @@ A lot of times to much data is being send back by way of properties.  It is bett
 ```BaseResponse.cs``` class.
 
 
+## Adding support for CSV file
+
+Contract in Application project
+Implementation in the Infrastructure project
+
+Add the handler and contract for ICsvExporter in the application project:
+```csharp
+public class GetEventsExportQueryHandler: IRequestHandler<GetEventsExportQuery, EventExportFileVm>
+{
+    private readonly IMapper mapper;
+    private readonly IAsyncRepository<Event> eventRepository;
+    private readonly ICsvExporter csvExporter;
+
+    public GetEventsExportQueryHandler(IMapper mapper, IAsyncRepository<Event> eventRepository, ICsvExporter csvExporter)
+    {
+        this.mapper = mapper;
+        this.eventRepository = eventRepository;
+        this.csvExporter = csvExporter;
+    }
+
+    public async Task<EventExportFileVm> Handle(GetEventsExportQuery request, CancellationToken cancellationToken)
+    {
+        var allEvents = mapper.Map<List<EventExportDto>>((await eventRepository.ListAllAsync()).OrderBy(x => x.Date));
+        var fileData = csvExporter.ExportEventsToCsv(allEvents);
+
+        var eventExportFileDto = new EventExportFileVm() { ContentType = "text/csv", Data = fileData, EventExportFileName = $"{Guid.NewGuid()}.csv" };
+
+        return eventExportFileDto;
+
+            
+    }
+}
+```
+
+Here is also the code for the ```CSVExporter.cs```, in the infrastructure project:
+```csharp
+    public class CsvExporter : ICsvExporter
+    {
+        public byte[] ExportEventsToCsv(List<EventExportDto> eventExportDtos)
+        {
+            using var memoryStream = new MemoryStream();
+            using (var streamWriter = new StreamWriter(memoryStream))
+            {
+                using var csvWriter = new CsvWriter(streamWriter, CultureInfo.CurrentCulture);
+                csvWriter.WriteRecords(eventExportDtos);
+            }
+            return memoryStream.ToArray();
+        }
+    }
+```
+Add support for file to Swagger:
+```csharp
+c.MapType<FileContentResult>(() => new OpenApiSchema { Type = "file" });
+```
+
+## Testing the application code
+
+Three types of tests:
+- Unit Test
+- Integration Test
+- Functional Test
+
+### Unit Test
+
+> Is a automated test that will check behaviour of a unit of code.
+
+### Integration Test
+
+Test infrastructure code
+Interaction between different layers
+
+### Functional Test
+
+> Test behaviour from the users perspective, often involves UI Testing
+
+
+
+
+
+
+
+
+
+
 
 
 

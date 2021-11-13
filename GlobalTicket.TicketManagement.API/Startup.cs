@@ -44,6 +44,7 @@ namespace GlobalTicket.TicketManagement.API
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "GlobalTicket.TicketManagement.API", Version = "v1" });
+                c.MapType<FileContentResult>(() => new OpenApiSchema { Type = "file" });
             });
         }
 
